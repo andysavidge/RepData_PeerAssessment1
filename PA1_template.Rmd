@@ -3,6 +3,30 @@
 
 ## Loading and preprocessing the data
 
+```{r}
+# save file url for the data source if needed
+fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+zip.file.here=file.exists("activity.zip")
+# if the file has not already been downloaded, load zip file and unzip
+if(zip.file.here){
+      print("'activity.zip' file is in the current R working directory:")
+      getwd()
+}else{
+      print("*** ERROR - cannot locate the zip data file: 'activity.zip'")
+}
+
+cvs.file.here=file.exists("activity.csv")
+if(cvs.file.here){
+      print("'activity.csv' file is in the R working directory:")
+      getwd()
+}else{
+      unzip("activity.zip")
+      print("Unzipping file to working directory:")
+      getwd()
+}
+# The dataset is stored in a comma-separated-value (CSV) file and 
+activity.df <- read.csv("activity.csv")  # 17568 obs. & 3 var.
+```
 
 
 ## What is mean total number of steps taken per day?
