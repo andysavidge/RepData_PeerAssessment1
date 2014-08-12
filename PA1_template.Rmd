@@ -1,44 +1,114 @@
-# Reproducible Research: Peer Assessment 1
+## Reproducible Research: Peer Assessment 1
+### Loading and preprocessing the data
 
+#### 1. Show any code that is needed to Load the data (i.e. read.csv()) &
+#### 2. Process/transform the data (if necessary) into a format suitable for your analysis
 
-## Loading and preprocessing the data
-
-```{r}
+```{r echo=TRUE}
 # save file url for the data source if needed
 fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 zip.file.here=file.exists("activity.zip")
-# if the file has not already been downloaded, load zip file and unzip
-if(zip.file.here){
-      print("'activity.zip' file is in the current R working directory:")
-      getwd()
-}else{
-      print("*** ERROR - cannot locate the zip data file: 'activity.zip'")
-}
-
 cvs.file.here=file.exists("activity.csv")
+# if the file has not already been downloaded, load zip file and unzip
 if(cvs.file.here){
-      print("'activity.csv' file is in the R working directory:")
+      print("'activity.csv' file is in the current R working directory:")
+      getwd()
+}else if(zip.file.here){
+      unzip("activity.zip")
+      print("Unzipping 'activity.zip' file to working directory:")
       getwd()
 }else{
-      unzip("activity.zip")
-      print("Unzipping file to working directory:")
-      getwd()
+      print("*** ERROR - cannot locate 'activity.zip' or 'activity.csv' data file!")
 }
 # The dataset is stored in a comma-separated-value (CSV) file and 
 activity.df <- read.csv("activity.csv")  # 17568 obs. & 3 var.
+v1=activity.df[1]
+v2=activity.df[2]
+v3=activity.df[3]
+```
+The Data File has `r nrow(activity.df)` observations and `r ncol(activity.df)` variables with names: `r names(activity.df)`
+
+There are `r length(activity.df[is.na(activity.df)])` missing values in the data as follows:  
+`r names(v1)` has `r sum(is.na(v1))` missing values  
+`r names(v2)` has `r sum(is.na(v2))` missing values  
+`r names(v3)` has `r sum(is.na(v3))` missing values  
+
+
+### What is mean total number of steps taken per day?
+
+#### 1. Make a histogram of the total number of steps taken each day
+```{r histogram}
+stepsComplete=activity.df[complete.cases(activity.df),]
+library(plyr)
+stepsSum=ddply(stepsComplete,.(date),summarize,totalSteps=sum(steps))
+hist(stepsSum$totalSteps, xlab="Total Steps Taken Per Day", 
+     main="Histogram of Total Steps Taken Per Day")
+```
+
+#### 2. Calculate and report the mean and median total number of steps taken per day
+```{r meanMedian}
+options("scipen"=10)
+mean.daily.steps=mean(stepsSum$totalSteps)
+median.daily.steps=median(stepsSum$totalSteps)
+```
+
+####The mean total number of steps taken per day is `r mean.daily.steps`
+
+####The median total number of steps taken per day is `r median.daily.steps`  
+
+
+### What is the average daily activity pattern?
+
+#### 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r ggplot}
+library(ggplot2)
+intervalSteps=stepsComplete[,c("interval","steps")]
+stepsAverage=ddply(intervalSteps,.(interval),summarize,averageSteps=mean(steps))
+ggplot(stepsAverage, aes(x=interval,y=averageSteps)) + geom_line() +
+      labs(y=expression("Average Number of Steps Taken in 5-minute Intervals"))+
+      labs(x=expression("5-minute Interval for All Days")) +
+      labs(title=expression(paste("Averge Number of Steps Taken in ", 
+                                  "5-minute intervals for All Days",sep=""))) +
+            theme(axis.text.x=element_text(angle=25, hjust=1,vjust=1))
 ```
 
 
-## What is mean total number of steps taken per day?
+#### 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r maxSteps}
+maxStepsIndex=which.max(stepsAverage[,2])
+stepsAverage$interval[maxStepsIndex]
+```
+
+The maximum number of steps in a 5-minute interval (averaged across all day)  
+is in the interval: `r stepsAverage$interval[maxStepsIndex]`
+
+
+### Imputing missing values
+
+#### 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+
+```{r naRows}
+naRows=sum(is.na(activity.df))
+totalRows=nrow(activity.df)
+lengthNaRows=length(activity.df[is.na(activity.df)])
+completeRows=nrow(na.omit(activity.df))
+```
+
+##### The total number of missing values in 'activities.csv' is: `r naRows`
+
+#### 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+#### 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+#### 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
 
-## What is the average daily activity pattern?
+### Are there differences in activity patterns between weekdays and weekends?
 
+#### 1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
+#### 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was creating using simulated data:
 
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
