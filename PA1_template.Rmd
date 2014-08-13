@@ -10,6 +10,8 @@
 
 library(ggplot2)  # for ggplot function etc.
 library(plyr)  # for ddply function
+library(lattice)
+options("scipen"=6)  # do not use scientific notation below 6 zeros.
 
 zip.file.here=file.exists("activity.zip")
 cvs.file.here=file.exists("activity.csv")
@@ -58,7 +60,6 @@ hist(stepsDateSum$totalSteps, xlab="Total Steps Taken Per Day",
 
 ##### 2. Calculate and report the mean and median total number of steps taken per day
 ```{r meanMedian}
-options("scipen"=5)  # do not use scientific notation below 5 zeros.
 mean.daily.steps <- round(mean(stepsDateSum$totalSteps),0)
 median.daily.steps <- median(stepsDateSum$totalSteps)
 mean.daily.steps
@@ -171,4 +172,16 @@ activityWkDay$weekDayEnd <- as.factor(activityWkDay$weekDayEnd)
 str(activityWkDay)
 ```
 ##### 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was creating using simulated data:
-
+```{r panelPlot}
+intervalStepsDayEnd <- activityWkDay[,c("interval","steps","weekDayEnd")]
+stepsAverageDayEnd <- ddply(intervalStepsDayEnd,
+                            c("interval","weekDayEnd"),summarize,
+                            N=length(steps), 
+                            averageStepsDayEnd=mean(steps), 
+                            totalStepsDayEnd=sum(steps))
+head(stepsAverageDayEnd)
+tail(stepsAverageDayEnd)
+dotplot(stepsAverageDayEnd$averageStepsDayEnd~stepsAverageDayEnd$interval|as.factor(stepsAverageDayEnd$weekDayEnd),
+        main="Steps taken during Interval Plot by weekend or weekday",
+   xlab="interval", 
+   layout=c(1,2))
