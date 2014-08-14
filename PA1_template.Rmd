@@ -3,10 +3,11 @@
 ##### 1. Show any code that is needed to Load the data (i.e. read.csv()) &
 ##### 2. Process/transform the data (if necessary) into a format suitable for your analysis
 
-```{r echo=TRUE}
+```{r opts_chunk$set(echo=TRUE, fig.width=8, fig.height=6)}
 # save file url for the Internet data source if needed
 #fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity
 #.zip"
+
 
 library(ggplot2)  # for ggplot function etc.
 library(plyr)  # for ddply function
@@ -47,7 +48,7 @@ There are `r length(activity[is.na(activity)])` missing values in the data as fo
 ```{r histogram}
 #barplot(total_daily_steps$steps, names.arg =total_daily_steps$date, #xlab = "Date",ylab="Total Daily Steps", main="Number of Steps per Day")
 
-
+# use only complete observations i.e. drop all NA observations
 stepsComplete <- activity[complete.cases(activity),]
 # aggrigating by date
 stepsDateSum <- ddply(stepsComplete, .(date), summarize, totalSteps=sum(steps))
@@ -75,6 +76,7 @@ median.daily.steps
 ##### 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 ```{r ggplot}
+# get only "interval" & "steps" for all observations i.e. ignore "date"
 intervalSteps <- stepsComplete[,c("interval","steps")]
 stepsAverage <- ddply(intervalSteps,.(interval),summarize,
                    averageSteps=mean(steps),totalSteps=sum(steps))
@@ -185,7 +187,21 @@ stepsAverageDayType <- ddply(intervalStepsDayType,
                             meanSteps=mean(steps), 
                             sumSteps=sum(steps))
 par(mfrow=c(2,1))
-stepsWeekDay=stepsAverageDayType[stepsAverageDayType$dayType=="weekday",]
-stepsWeekEnd=stepsAverageDayType[stepsAverageDayType$dayType=="weekend",]
-plot(stepsWeekDay$interval,stepsWeekDay$meanSteps,type="l")
-plot(stepsWeekEnd$interval,stepsWeekEnd$meanSteps,type="l")
+stepsWeekDay <- stepsAverageDayType[stepsAverageDayType$dayType=="weekday",]
+stepsWeekEnd <- stepsAverageDayType[stepsAverageDayType$dayType=="weekend",]
+#plot(stepsWeekDay$interval,stepsWeekDay$meanSteps,type="l")
+#plot(stepsWeekEnd$interval,stepsWeekEnd$meanSteps,type="l")
+require(gridExtra)
+plot1 <- ggplot(stepsWeekDay, aes(x=interval,y=meanSteps)) +
+      geom_line() +
+      xlab("Intervals at 5 Minutes)") +
+      ylab("Mean Steps Taken") + 
+      scale_y_continuous(limit = c(0, 250)) + 
+      ggtitle("WeekDay Mean Steps Taken During Each Five Minute Interval")
+plot2 <- ggplot(stepsWeekEnd, aes(x=interval,y=meanSteps)) + 
+      geom_line() + 
+      xlab("Intervals at 5 Minutes") +
+      ylab("Mean Steps Taken") + 
+      scale_y_continuous(limit = c(0, 250)) + 
+      ggtitle("WeekEnd Mean Steps Taken During Each Five Minute Interval")
+grid.arrange(plot1, plot2, ncol=1)
