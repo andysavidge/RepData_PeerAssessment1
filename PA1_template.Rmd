@@ -27,23 +27,16 @@ if(cvs.file.here){
       print("*** ERROR - cannot locate 'activity.zip' or 'activity.csv' data file!")
 }
 # read.csv the dataset is stored in a comma-separated-value (CSV) file 
-activity.df <- read.csv("activity.csv")  # 17568 obs. & 3 var.
+activity <- read.csv("activity.csv")  # 17568 obs. & 3 var.
 
-v1 <- activity.df[1]
-v2 <- activity.df[2]
-v3 <- activity.df[3]
-#
-#v4 <- as.character(activity.df[3])
-#x <- as.character(activity.df[2])
-#dateInterval <- paste((as.character(activity.df[2])),
-#                      (as.character(activity.df[3])))  # put date & interval #together to use strptime function to store dates&times
-#dateInterval2 <- strptime(dateInterval,"%Y-%m-%d %H%M")
-#activity.df$dateMin <- dateInterval2
+v1 <- activity[1]
+v2 <- activity[2]
+v3 <- activity[3]
 ```
 
-The Data File has `r nrow(activity.df)` observations and `r ncol(activity.df)` variables with names: `r names(activity.df)`
+The Data File has `r nrow(activity)` observations and `r ncol(activity)` variables with names: `r names(activity)`
 
-There are `r length(activity.df[is.na(activity.df)])` missing values in the data as follows:  
+There are `r length(activity[is.na(activity)])` missing values in the data as follows:  
 `r names(v1)` has `r sum(is.na(v1))` missing values  
 `r names(v2)` has `r sum(is.na(v2))` missing values  
 `r names(v3)` has `r sum(is.na(v3))` missing values  
@@ -52,10 +45,17 @@ There are `r length(activity.df[is.na(activity.df)])` missing values in the data
 #### PART 2 of 5: What is mean total number of steps taken per day?
 ##### 1. Make a histogram of the total number of steps taken each day
 ```{r histogram}
-stepsComplete <- activity.df[complete.cases(activity.df),]
-stepsDateSum <- ddply(stepsComplete,.(date),summarize,totalSteps=sum(steps))
-hist(stepsDateSum$totalSteps, xlab="Total Steps Taken Per Day", 
-     main="Histogram of Total Steps Taken Per Day")
+#barplot(total_daily_steps$steps, names.arg =total_daily_steps$date, #xlab = "Date",ylab="Total Daily Steps", main="Number of Steps per Day")
+
+
+stepsComplete <- activity[complete.cases(activity),]
+# aggrigating by date
+stepsDateSum <- ddply(stepsComplete, .(date), summarize, totalSteps=sum(steps))
+total_daily_steps <- aggregate(steps ~ date, activity, sum, na.rm=TRUE)
+# Make histogram of the total steps taken each day
+barplot(stepsDateSum$totalSteps, names.arg=stepsDateSum$date, 
+        xlab="Date", ylab="Total Daily Steps",
+        main="Histogram of Total Steps Taken Each Day")
 ```
 
 ##### 2. Calculate and report the mean and median total number of steps taken per day
@@ -106,12 +106,12 @@ is in the interval: `r stepsAverage$interval[maxStepsIndex]`
 ##### 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
 ```{r naRows}
-naRows <- sum(is.na(activity.df))
-sum(is.na(activity.df))
-#totalRows <- nrow(activity.df)
-#lengthNaRows <- length(activity.df[is.na(activity.df)])
-#completeRows <- nrow(na.omit(activity.df))
-#completeActivity.df <- na.omit(activity.df)
+naRows <- sum(is.na(activity))
+sum(is.na(activity))
+#totalRows <- nrow(activity)
+#lengthNaRows <- length(activity[is.na(activity)])
+#completeRows <- nrow(na.omit(activity))
+#completeActivity <- na.omit(activity)
 ```
 
 ##### The total number of missing values in 'activities.csv' is: `r naRows`
@@ -119,7 +119,7 @@ sum(is.na(activity.df))
 ##### 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
 ```{r naToMean}
-addedMeans <- ddply(activity.df,.(interval),transform,
+addedMeans <- ddply(activity,.(interval),transform,
               intervalMeanSteps=round(mean(steps,na.rm=TRUE),0))
 for (i in 1:nrow(addedMeans)){
       if (is.na(addedMeans$steps[i])){
@@ -138,8 +138,12 @@ activityNOna <- addedMeans[,c("steps","date","interval")]
 ```{r histoNOna}
 stepsDateSumNOna <- ddply(activityNOna,.(date),
                           summarize,totalSteps=sum(steps))
-hist(stepsDateSumNOna$totalSteps, xlab="Total Steps Taken Per Day", 
-     main="Histogram of Total Steps Taken Per Day - NAs Changed to Mean Steps")
+barplot(stepsDateSumNOna$totalSteps, names.arg=stepsDateSumNOna$date, 
+        xlab="Date", ylab="Total Daily Steps",
+        main="Histogram of Total Steps Taken Per Day")
+#hist(stepsDateSumNOna$totalSteps, xlab="Total Steps Taken Per Day", 
+#     main="Histogram of Total Steps Taken Per Day - NAs Changed to Mean Steps"
+#)
 mean.daily.stepsNOna <- round(mean(stepsDateSumNOna$totalSteps),0)
 median.daily.stepsNOna <- median(stepsDateSumNOna$totalSteps)
 mean.daily.stepsNOna
@@ -155,33 +159,33 @@ median.daily.stepsNOna
 ##### 1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 ```{r addWkDay}
 activityNOna$date <- strptime(as.character(activityNOna$date),"%Y-%m-%d")
-addWeekDay <- function(xdf, dateField, colName="weekDay",col2="weekDayEnd"){
-      xdf[,colName] <- (weekdays(xdf[,dateField])) 
-      xdf[,col2] <- (weekdays(xdf[,dateField])) 
-      return(xdf) 
-      }
-activityWkDay <- addWeekDay(activityNOna,"date")
-for (i in 1:nrow(activityWkDay)){
-      if (activityWkDay$weekDay[i] %in% c("Saturday","Sunday")){
-            activityWkDay$weekDayEnd[i] <- "weekend"
-      }else{
-            activityWkDay$weekDayEnd[i] <- "weekday"
-      }
-}
-activityWkDay$weekDayEnd <- as.factor(activityWkDay$weekDayEnd)
-str(activityWkDay)
+activityNOna$dayType=ifelse(weekdays(activityNOna$date) %in% c("Saturday","Sunday"), "weekend", "weekday")
+#addWeekDay <- function(xdf, dateField, colName="weekDay",col2="weekDayEnd"){
+#      xdf[,colName] <- (weekdays(xdf[,dateField])) 
+#      xdf[,col2] <- (weekdays(xdf[,dateField])) 
+#      return(xdf) 
+#      }
+#activityWkDay <- addWeekDay(activityNOna,"date")
+#for (i in 1:nrow(activityWkDay)){
+#      if (activityWkDay$weekDay[i] %in% c("Saturday","Sunday")){
+#            activityWkDay$weekDayEnd[i] <- "weekend"
+#      }else{
+#            activityWkDay$weekDayEnd[i] <- "weekday"
+#      }
+#}
+activityNOna$dayType <- as.factor(activityNOna$dayType)
+str(activityNOna)
 ```
 ##### 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was creating using simulated data:
 ```{r panelPlot}
-intervalStepsDayEnd <- activityWkDay[,c("interval","steps","weekDayEnd")]
-stepsAverageDayEnd <- ddply(intervalStepsDayEnd,
-                            c("interval","weekDayEnd"),summarize,
+intervalStepsDayType <- activityNOna[,c("interval","steps","dayType")]
+stepsAverageDayType <- ddply(intervalStepsDayType,
+                            c("interval","dayType"),summarize,
                             N=length(steps), 
-                            averageStepsDayEnd=mean(steps), 
-                            totalStepsDayEnd=sum(steps))
-head(stepsAverageDayEnd)
-tail(stepsAverageDayEnd)
-dotplot(stepsAverageDayEnd$averageStepsDayEnd~stepsAverageDayEnd$interval|as.factor(stepsAverageDayEnd$weekDayEnd),
-        main="Steps taken during Interval Plot by weekend or weekday",
-   xlab="interval", 
-   layout=c(1,2))
+                            meanSteps=mean(steps), 
+                            sumSteps=sum(steps))
+par(mfrow=c(2,1))
+stepsWeekDay=stepsAverageDayType[stepsAverageDayType$dayType=="weekday",]
+stepsWeekEnd=stepsAverageDayType[stepsAverageDayType$dayType=="weekend",]
+plot(stepsWeekDay$interval,stepsWeekDay$meanSteps,type="l")
+plot(stepsWeekEnd$interval,stepsWeekEnd$meanSteps,type="l")
