@@ -3,15 +3,10 @@
 ##### 1. Show any code that is needed to Load the data (i.e. read.csv()) &
 ##### 2. Process/transform the data (if necessary) into a format suitable for your analysis
 
-```{r opts_chunk$set(echo=TRUE, fig.width=8, fig.height=6)}
-# save file url for the Internet data source if needed
-#fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity
-#.zip"
-
-
+```{r setup, echo=TRUE, fig.width=6, fig.height=8}
+# used:  {r setup, echo=TRUE, fig.width=6, fig.height=8}
 library(ggplot2)  # for ggplot function etc.
 library(plyr)  # for ddply function
-library(lattice)
 options("scipen"=6)  # do not use scientific notation below 6 zeros.
 
 zip.file.here=file.exists("activity.zip")
@@ -29,7 +24,6 @@ if(cvs.file.here){
 }
 # read.csv the dataset is stored in a comma-separated-value (CSV) file 
 activity <- read.csv("activity.csv")  # 17568 obs. & 3 var.
-
 v1 <- activity[1]
 v2 <- activity[2]
 v3 <- activity[3]
@@ -49,9 +43,10 @@ There are `r length(activity[is.na(activity)])` missing values in the data as fo
 #barplot(total_daily_steps$steps, names.arg =total_daily_steps$date, #xlab = "Date",ylab="Total Daily Steps", main="Number of Steps per Day")
 
 # use only complete observations i.e. drop all NA observations
-stepsComplete <- activity[complete.cases(activity),]
-# aggrigating by date
-stepsDateSum <- ddply(stepsComplete, .(date), summarize, totalSteps=sum(steps))
+stepsComplete <- activity[complete.cases(activity),]  # 15264 obs. & 3 var.
+# aggregating by date
+stepsDateSum <- ddply(stepsComplete, .(date), summarize, 
+                      freqDate=length(date),  totalSteps=sum(steps))
 total_daily_steps <- aggregate(steps ~ date, activity, sum, na.rm=TRUE)
 # Make histogram of the total steps taken each day
 barplot(stepsDateSum$totalSteps, names.arg=stepsDateSum$date, 
@@ -60,15 +55,16 @@ barplot(stepsDateSum$totalSteps, names.arg=stepsDateSum$date,
 ```
 
 ##### 2. Calculate and report the mean and median total number of steps taken per day
-```{r meanMedian}
+```{r mean.total}
 mean.daily.steps <- round(mean(stepsDateSum$totalSteps),0)
-median.daily.steps <- median(stepsDateSum$totalSteps)
 mean.daily.steps
-median.daily.steps
 ```
-
 #####The mean total number of steps taken per day is `r mean.daily.steps`
 
+```{r median.total}
+median.daily.steps <- median(stepsDateSum$totalSteps)
+median.daily.steps
+```
 #####The median total number of steps taken per day is `r median.daily.steps`  
 
 
@@ -82,14 +78,12 @@ stepsAverage <- ddply(intervalSteps,.(interval),summarize,
                    averageSteps=mean(steps),totalSteps=sum(steps))
 ggplot(stepsAverage, aes(x=interval,y=averageSteps)) + geom_line() +
       labs(y=expression("Average Number of Steps Taken in 5-minute Intervals"))+
-      labs(x=expression("5-minute Interval for All Days")) +  
+      labs(x=expression("5-minute Interval for All Days")) +
+      scale_x_discrete(breaks = c("0","500","1000","1500","2000"),                                 
+                       labels=c(":00","5:00","10:00","15:00","20:00")) +
       labs(title=expression(paste("Averge Number of Steps Taken in ", 
                                   "5-minute intervals for All Days",sep=""))) +
       theme(axis.text.x=element_text(angle=25, hjust=1,vjust=1))
-      #scale_x_discrete(limit = cc(00,500,1000,1500,2000),
-      #               labels = c(":00","5:00","10:00","15:00","20:00"))
-      #axis(1,labels=c(":00","5:00","10:00","15:00","20:00"),
-      #     at=c(00,500,1000,1500,2000))
 ```
 
 
@@ -110,10 +104,6 @@ is in the interval: `r stepsAverage$interval[maxStepsIndex]`
 ```{r naRows}
 naRows <- sum(is.na(activity))
 sum(is.na(activity))
-#totalRows <- nrow(activity)
-#lengthNaRows <- length(activity[is.na(activity)])
-#completeRows <- nrow(na.omit(activity))
-#completeActivity <- na.omit(activity)
 ```
 
 ##### The total number of missing values in 'activities.csv' is: `r naRows`
@@ -143,17 +133,15 @@ stepsDateSumNOna <- ddply(activityNOna,.(date),
 barplot(stepsDateSumNOna$totalSteps, names.arg=stepsDateSumNOna$date, 
         xlab="Date", ylab="Total Daily Steps",
         main="Histogram of Total Steps Taken Per Day")
-#hist(stepsDateSumNOna$totalSteps, xlab="Total Steps Taken Per Day", 
-#     main="Histogram of Total Steps Taken Per Day - NAs Changed to Mean Steps"
-#)
 mean.daily.stepsNOna <- round(mean(stepsDateSumNOna$totalSteps),0)
-median.daily.stepsNOna <- median(stepsDateSumNOna$totalSteps)
 mean.daily.stepsNOna
-median.daily.stepsNOna
-
 ```
 #####The mean total number of steps taken per day is `r mean.daily.stepsNOna`
 
+```{r median2}
+median.daily.stepsNOna <- median(stepsDateSumNOna$totalSteps)
+median.daily.stepsNOna
+```
 #####The median total number of steps taken per day is `r median.daily.stepsNOna`  
 
 
@@ -162,19 +150,6 @@ median.daily.stepsNOna
 ```{r addWkDay}
 activityNOna$date <- strptime(as.character(activityNOna$date),"%Y-%m-%d")
 activityNOna$dayType=ifelse(weekdays(activityNOna$date) %in% c("Saturday","Sunday"), "weekend", "weekday")
-#addWeekDay <- function(xdf, dateField, colName="weekDay",col2="weekDayEnd"){
-#      xdf[,colName] <- (weekdays(xdf[,dateField])) 
-#      xdf[,col2] <- (weekdays(xdf[,dateField])) 
-#      return(xdf) 
-#      }
-#activityWkDay <- addWeekDay(activityNOna,"date")
-#for (i in 1:nrow(activityWkDay)){
-#      if (activityWkDay$weekDay[i] %in% c("Saturday","Sunday")){
-#            activityWkDay$weekDayEnd[i] <- "weekend"
-#      }else{
-#            activityWkDay$weekDayEnd[i] <- "weekday"
-#      }
-#}
 activityNOna$dayType <- as.factor(activityNOna$dayType)
 str(activityNOna)
 ```
@@ -189,19 +164,24 @@ stepsAverageDayType <- ddply(intervalStepsDayType,
 par(mfrow=c(2,1))
 stepsWeekDay <- stepsAverageDayType[stepsAverageDayType$dayType=="weekday",]
 stepsWeekEnd <- stepsAverageDayType[stepsAverageDayType$dayType=="weekend",]
-#plot(stepsWeekDay$interval,stepsWeekDay$meanSteps,type="l")
-#plot(stepsWeekEnd$interval,stepsWeekEnd$meanSteps,type="l")
 require(gridExtra)
 plot1 <- ggplot(stepsWeekDay, aes(x=interval,y=meanSteps)) +
-      geom_line() +
-      xlab("Intervals at 5 Minutes)") +
+      geom_line() + 
+      #theme(axis.title.x = element_blank()) + 
+      #xlab("Intervals at 5 Minutes)") +
+      scale_x_discrete(breaks = c("0","500","1000","1500","2000"),                                 
+                       labels=c(":00","5:00","10:00","15:00","20:00")) +
+      xlab(NULL) +
       ylab("Mean Steps Taken") + 
       scale_y_continuous(limit = c(0, 250)) + 
       ggtitle("WeekDay Mean Steps Taken During Each Five Minute Interval")
 plot2 <- ggplot(stepsWeekEnd, aes(x=interval,y=meanSteps)) + 
       geom_line() + 
+      scale_x_discrete(breaks = c("0","500","1000","1500","2000"),                                 
+                       labels=c(":00","5:00","10:00","15:00","20:00")) +
       xlab("Intervals at 5 Minutes") +
       ylab("Mean Steps Taken") + 
       scale_y_continuous(limit = c(0, 250)) + 
-      ggtitle("WeekEnd Mean Steps Taken During Each Five Minute Interval")
+      ggtitle("WeekEnd Mean Steps Taken During Each Five Minute Interval") +
+      theme(plot.title=element_text(vjust = -2.5))
 grid.arrange(plot1, plot2, ncol=1)
