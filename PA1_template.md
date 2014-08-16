@@ -72,14 +72,14 @@ barplot(stepsDateSum$totalSteps, names.arg=stepsDateSum$date,
 ##### 2. Calculate and report the mean and median total number of steps taken per day
 
 ```r
-mean.daily.steps <- round(mean(stepsDateSum$totalSteps),0)
+mean.daily.steps <- round(mean(stepsDateSum$totalSteps),1)
 mean.daily.steps
 ```
 
 ```
 ## [1] 10766
 ```
-#####The mean total number of steps taken per day is 10766
+#####The mean steps (with missing values ignored) per day is 10766.2
 
 
 ```r
@@ -90,7 +90,7 @@ median.daily.steps
 ```
 ## [1] 10765
 ```
-#####The median total number of steps taken per day is 10765  
+#####The median steps (with missing values ignored) per day is 10765  
 
 
 #### PART 3 of 5: What is the average daily activity pattern?
@@ -148,6 +148,8 @@ sum(is.na(activity))
 
 ##### 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
+######My strategy for filling in all of the missing values in the dataset is to use the mean value of steps for the interval when a missing value is found. See code below:
+
 
 ```r
 addedMeans <- ddply(activity,.(interval),transform,
@@ -168,6 +170,15 @@ activityNOna <- addedMeans[,c("steps","date","interval")]
 
 ##### 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
+######The mean and median total number of steps taken per day differ only slightly from the estimates from the first part. And the impact of imputing missing data on the estimates of the total daily number of steps is small at less than 1 part in 10,000.
+
+The mean steps (with missing values ignored) per day is 10766.2  
+The mean steps (with missing values filled in) per day is 10765.6
+
+The median steps (with missing values ignored) per day is 10765  
+The median steps (with missing values filled in) per day is 10762
+
+
 ```r
 stepsDateSumNOna <- ddply(activityNOna,.(date),
                           summarize,totalSteps=sum(steps))
@@ -179,14 +190,14 @@ barplot(stepsDateSumNOna$totalSteps, names.arg=stepsDateSumNOna$date,
 ![plot of chunk histoNOna](figure/histoNOna.png) 
 
 ```r
-mean.daily.stepsNOna <- round(mean(stepsDateSumNOna$totalSteps),0)
+mean.daily.stepsNOna <- round(mean(stepsDateSumNOna$totalSteps),1)
 mean.daily.stepsNOna
 ```
 
 ```
 ## [1] 10766
 ```
-#####The mean total number of steps taken per day is 10766
+#####The mean steps (with missing values filled in) per day is 10765.6
 
 
 ```r
@@ -197,7 +208,7 @@ median.daily.stepsNOna
 ```
 ## [1] 10762
 ```
-#####The median total number of steps taken per day is 10762  
+#####The median steps (with missing values filled in) per day is 10762  
 
 
 #### PART 5 of 5: Are there differences in activity patterns between weekdays and weekends?
