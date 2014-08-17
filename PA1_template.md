@@ -152,6 +152,7 @@ sum(is.na(activity))
 
 
 ```r
+# fill in all missing values in the dataset
 addedMeans <- ddply(activity,.(interval),transform,
               intervalMeanSteps=round(mean(steps,na.rm=TRUE),0))
 for (i in 1:nrow(addedMeans)){
@@ -170,7 +171,7 @@ activityNOna <- addedMeans[,c("steps","date","interval")]
 
 ##### 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-######The mean and median total number of steps taken per day differ only slightly from the estimates from the first part. And the impact of imputing missing data on the estimates of the total daily number of steps is small at less than 1 part in 10,000.
+######The mean and median total number of steps taken per day differ only slightly from the estimates from the first part. And the impact of imputing missing data on the estimates of the total daily number of steps is small at less than 1 part in 10,000 for the mean and at 3 parts in 10,000 for the median values between the dataset (one with NAs and one with NAs replaced).
 
 The mean steps (with missing values ignored) per day is 10766.2  
 The mean steps (with missing values filled in) per day is 10765.6
@@ -184,7 +185,7 @@ stepsDateSumNOna <- ddply(activityNOna,.(date),
                           summarize,totalSteps=sum(steps))
 barplot(stepsDateSumNOna$totalSteps, names.arg=stepsDateSumNOna$date, 
         xlab="Date", ylab="Total Daily Steps",
-        main="Histogram of Total Steps Taken Per Day")
+        main="Histogram of Total Steps Taken Each Day After Missing Values Filled In")
 ```
 
 ![plot of chunk histoNOna](figure/histoNOna.png) 
